@@ -1,0 +1,12 @@
+server:
+  AppVersion: 1.0.0
+  Port: :8080
+  ReadTimeout: 10
+  WriteTimeout: 10
+
+postgres:
+  PostgresqlHost: containers-us-west-104.railway.app
+  PostgresqlPort: 5611
+  PostgresqlUser: postgres
+  PostgresqlPassword: wuMaihg3yHOY03kHUbgf
+  PostgresqlDbname: persons_
