@@ -33,6 +33,7 @@ jobs:
   deploy:
     name: Deploy
     runs-on: ubuntu-latest
+    needs: build
     steps:
       - name: Deploy
         env:
@@ -43,7 +44,12 @@ jobs:
   api-testing:
     name: API testing
     runs-on: ubuntu-latest
+    needs: deploy
     steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
       - name: Run API Tests
         uses: matt-ball/newman-action@master
         with:

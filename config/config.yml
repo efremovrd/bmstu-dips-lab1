@@ -9,4 +9,4 @@ postgres:
   PostgresqlPort: 5611
   PostgresqlUser: postgres
   PostgresqlPassword: wuMaihg3yHOY03kHUbgf
-  PostgresqlDbname: persons_
+  PostgresqlDbname: railway
