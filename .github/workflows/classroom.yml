@@ -28,12 +28,33 @@ jobs:
         run: |
           go build ./cmd/api
 
-  # TODO test
+  unit-test:
+    name: UNIT testing
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Setup Go 1.21.2
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.21.2'
+
+      - name: Install dependencies
+        run: |
+          go mod download
+
+      - name: UNIT testing pg-repo
+        run: |
+          go test ./internal/person/repo_test 
+
 
   deploy:
     name: Deploy
     runs-on: ubuntu-latest
-    needs: build
+    needs: unit-test
     steps:
       - name: Deploy
         env:
@@ -58,9 +79,9 @@ jobs:
           delayRequest: 100
           reporters: '[ "cli" ]'
 
-      - name: Autograding
-        uses: education/autograding@v1
-        continue-on-error: true
+      # - name: Autograding
+      #   uses: education/autograding@v1
+      #   continue-on-error: true
 
       # - name: Github auto grader mark
       #   uses: Romanow/google-sheet-autograder-marker@v1.0
