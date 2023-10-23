@@ -29,7 +29,13 @@ func (p *PersonUseCase) GetById(ctx context.Context, id int) (*models.Person, er
 }
 
 func (p *PersonUseCase) Update(ctx context.Context, model *models.Person, toUpdate *models.Person) (*models.Person, error) {
-	return p.personRepo.Update(ctx, model, toUpdate)
+	_, err := p.personRepo.Update(ctx, model, toUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	// crutch
+	return p.personRepo.GetById(ctx, model.Id)
 }
 
 func (p *PersonUseCase) Delete(ctx context.Context, id int) error {
