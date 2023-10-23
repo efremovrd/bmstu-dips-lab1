@@ -5,6 +5,7 @@ import (
 	"bmstu-dips-lab1/models"
 	"bmstu-dips-lab1/pkg/errs"
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
@@ -24,7 +25,7 @@ type PersonUpdRequest struct {
 }
 
 type PersonResponse struct {
-	Id      string `json:"id"`
+	Id      int    `json:"id"`
 	Name    string `json:"name"`
 	Address string `json:"address"`
 	Work    string `json:"work"`
@@ -63,7 +64,7 @@ func (p *PersonHandlers) Create() gin.HandlerFunc {
 			return
 		}
 
-		c.Header("Location", "/api/v1/persons/"+createdperson.Id)
+		c.Header("Location", "/api/v1/persons/"+strconv.Itoa(createdperson.Id))
 
 		c.Status(http.StatusCreated)
 	}
@@ -79,10 +80,15 @@ func (p *PersonHandlers) Update() gin.HandlerFunc {
 			return
 		}
 
+		intid, err := strconv.Atoi(c.Param("personid"))
+		if err != nil {
+			c.AbortWithStatus(http.StatusBadRequest)
+		}
+
 		const updStr string = "y"
 		const updInt int = 1
 
-		modelBL := &models.Person{Id: c.Param("personid")}
+		modelBL := &models.Person{Id: intid}
 		toUpdate := &models.Person{}
 
 		if request.Name != nil {
@@ -117,7 +123,12 @@ func (p *PersonHandlers) Update() gin.HandlerFunc {
 
 func (p *PersonHandlers) GetById() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		foundperson, err := p.personUC.GetById(c, c.Param("personid"))
+		intid, err := strconv.Atoi(c.Param("personid"))
+		if err != nil {
+			c.AbortWithStatus(http.StatusBadRequest)
+		}
+
+		foundperson, err := p.personUC.GetById(c, intid)
 		if err != nil {
 			c.AbortWithStatus(errs.MatchHttpErr(err))
 			return
@@ -129,13 +140,18 @@ func (p *PersonHandlers) GetById() gin.HandlerFunc {
 
 func (p *PersonHandlers) Delete() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		err := p.personUC.Delete(c, c.Param("personid"))
+		intid, err := strconv.Atoi(c.Param("personid"))
+		if err != nil {
+			c.AbortWithStatus(http.StatusBadRequest)
+		}
+
+		err = p.personUC.Delete(c, intid)
 		if err != nil {
 			c.AbortWithStatus(errs.MatchHttpErr(err))
 			return
 		}
 
-		c.Status(http.StatusOK)
+		c.Status(http.StatusNoContent)
 	}
 }
 
@@ -147,9 +163,7 @@ func (p *PersonHandlers) GetAll() gin.HandlerFunc {
 			return
 		}
 
-		c.JSON(http.StatusOK, &PersonGetAllResponse{
-			Persons: PersonsBLToResponse(foundpersons),
-		})
+		c.JSON(http.StatusOK, PersonsBLToResponse(foundpersons))
 	}
 }
 

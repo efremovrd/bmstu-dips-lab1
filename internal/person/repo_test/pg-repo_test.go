@@ -7,7 +7,6 @@ import (
 	"bmstu-dips-lab1/pkg/postgres"
 	"context"
 	"errors"
-	"strconv"
 	"testing"
 
 	"github.com/Masterminds/squirrel"
@@ -59,7 +58,7 @@ func TestPersonRepo_Create(t *testing.T) {
 				mockPool.EXPECT().QueryRow(ctx, "INSERT INTO persons_ (name_, address_, work_, age_) VALUES ($1,$2,$3,$4) RETURNING \"id_\"", person.Name, person.Address, person.Work, person.Age).Return(pgxRows)
 			},
 			expectedPerson: models.Person{
-				Id:      "345",
+				Id:      345,
 				Name:    "qwerty",
 				Work:    "sdcsd",
 				Address: "ecefvc",
@@ -115,12 +114,12 @@ func TestPersonRepo_GetById(t *testing.T) {
 
 	r := repo.NewPersonRepo(&db)
 
-	type mockBehavior func(ctx context.Context, id string)
+	type mockBehavior func(ctx context.Context, id int)
 
 	testTable := []struct {
 		nameTest       string
 		ctx            context.Context
-		id             string
+		id             int
 		person         models.Person
 		mockBehavior   mockBehavior
 		expectedPerson models.Person
@@ -128,15 +127,14 @@ func TestPersonRepo_GetById(t *testing.T) {
 		{
 			nameTest: "ok",
 			ctx:      context.Background(),
-			id:       "345",
-			mockBehavior: func(ctx context.Context, id string) {
+			id:       345,
+			mockBehavior: func(ctx context.Context, id int) {
 				pgxRows := pgxpoolmock.NewRows([]string{"name_", "address_", "work_", "age_"}).AddRow("qwerty", "ecefvc", "sdcsd", 12).ToPgxRows()
 				pgxRows.Next()
-				idint, _ := strconv.Atoi(id)
-				mockPool.EXPECT().QueryRow(ctx, "SELECT name_, address_, work_, age_ FROM persons_ WHERE id_ = $1", idint).Return(pgxRows)
+				mockPool.EXPECT().QueryRow(ctx, "SELECT name_, address_, work_, age_ FROM persons_ WHERE id_ = $1", id).Return(pgxRows)
 			},
 			expectedPerson: models.Person{
-				Id:      "345",
+				Id:      345,
 				Name:    "qwerty",
 				Work:    "sdcsd",
 				Address: "ecefvc",
@@ -144,19 +142,12 @@ func TestPersonRepo_GetById(t *testing.T) {
 			},
 		},
 		{
-			nameTest:     "invalid_inputs",
-			ctx:          context.Background(),
-			id:           "5r4",
-			mockBehavior: func(ctx context.Context, id string) {},
-		},
-		{
 			nameTest: "no_rows",
 			ctx:      context.Background(),
-			id:       "345",
-			mockBehavior: func(ctx context.Context, id string) {
+			id:       345,
+			mockBehavior: func(ctx context.Context, id int) {
 				pgxRows := pgxpoolmock.NewRows([]string{}).AddRow().ToPgxRows()
-				idint, _ := strconv.Atoi(id)
-				mockPool.EXPECT().QueryRow(ctx, "SELECT name_, address_, work_, age_ FROM persons_ WHERE id_ = $1", idint).Return(pgxRows)
+				mockPool.EXPECT().QueryRow(ctx, "SELECT name_, address_, work_, age_ FROM persons_ WHERE id_ = $1", id).Return(pgxRows)
 			},
 		},
 	}
@@ -213,14 +204,14 @@ func TestPersonRepo_GetAll(t *testing.T) {
 			},
 			expectedPersons: []*models.Person{
 				{
-					Id:      "345",
+					Id:      345,
 					Address: "address1",
 					Work:    "work1",
 					Name:    "qwerty1",
 					Age:     11,
 				},
 				{
-					Id:      "346",
+					Id:      346,
 					Address: "address2",
 					Work:    "work2",
 					Name:    "qwerty2",
@@ -297,92 +288,70 @@ func TestFormRepo_Update(t *testing.T) {
 			nameTest: "ok",
 			ctx:      context.Background(),
 			person: models.Person{
-				Id:      "345",
+				Id:      345,
 				Name:    "qwerty",
 				Work:    "work",
 				Address: "address",
 				Age:     12,
 			},
 			toUpdate: models.Person{
-				Id:      "",
+				Id:      0,
 				Name:    "",
 				Work:    "newwork",
 				Address: "",
 				Age:     0,
 			},
 			mockBehavior: func(ctx context.Context, person *models.Person, toUpdate *models.Person) {
-				idint, _ := strconv.Atoi(person.Id)
-				mockPool.EXPECT().Exec(ctx, "UPDATE persons_ SET work_ = $1 WHERE id_ = $2", person.Work, idint).Return(pgxmock.NewResult("UPDATE", 1), nil)
+				mockPool.EXPECT().Exec(ctx, "UPDATE persons_ SET work_ = $1 WHERE id_ = $2", person.Work, person.Id).Return(pgxmock.NewResult("UPDATE", 1), nil)
 			},
 			expectedPerson: models.Person{
-				Id:      "345",
+				Id:      345,
 				Name:    "qwerty",
 				Work:    "work",
 				Address: "address",
 				Age:     12,
 			},
-		},
-		{
-			nameTest: "invalid_inputs_id",
-			ctx:      context.Background(),
-			person: models.Person{
-				Id:      "5r4",
-				Name:    "qwerty",
-				Work:    "work",
-				Address: "address",
-				Age:     12,
-			},
-			toUpdate: models.Person{
-				Id:      "",
-				Name:    "",
-				Work:    "newwork",
-				Address: "",
-				Age:     0,
-			},
-			mockBehavior: func(ctx context.Context, person *models.Person, toUpdate *models.Person) {},
 		},
 		{
 			nameTest: "no_person_to_update",
 			ctx:      context.Background(),
 			person: models.Person{
-				Id:      "345",
+				Id:      345,
 				Name:    "qwerty",
 				Work:    "work",
 				Address: "address",
 				Age:     12,
 			},
 			toUpdate: models.Person{
-				Id:      "",
+				Id:      0,
 				Name:    "",
 				Work:    "newwork",
 				Address: "",
 				Age:     0,
 			},
 			mockBehavior: func(ctx context.Context, person *models.Person, toUpdate *models.Person) {
-				idint, _ := strconv.Atoi(person.Id)
-				mockPool.EXPECT().Exec(ctx, "UPDATE persons_ SET work_ = $1 WHERE id_ = $2", person.Work, idint).Return(pgxmock.NewResult("UPDATE", 0), nil)
+				mockPool.EXPECT().Exec(ctx, "UPDATE persons_ SET work_ = $1 WHERE id_ = $2", person.Work, person.Id).Return(pgxmock.NewResult("UPDATE", 0), nil)
 			},
 		},
 		{
 			nameTest: "exec_error",
 			ctx:      context.Background(),
 			person: models.Person{
-				Id:      "345",
+				Id:      345,
 				Name:    "qwerty",
 				Work:    "work",
 				Address: "address",
 				Age:     12,
 			},
 			toUpdate: models.Person{
-				Id:      "",
+				Id:      0,
 				Name:    "",
 				Work:    "newwork",
 				Address: "",
 				Age:     0,
 			},
 			mockBehavior: func(ctx context.Context, person *models.Person, toUpdate *models.Person) {
-				idint, _ := strconv.Atoi(person.Id)
-				mockPool.EXPECT().Exec(ctx, "UPDATE persons_ SET work_ = $1 WHERE id_ = $2", person.Work, idint).Return(nil, errors.New("exec_error"))
+				mockPool.EXPECT().Exec(ctx, "UPDATE persons_ SET work_ = $1 WHERE id_ = $2", person.Work, person.Id).Return(nil, errors.New("exec_error"))
 			},
 		},
 	}
@@ -424,45 +393,36 @@ func TestFormRepo_Delete(t *testing.T) {
 
 	r := repo.NewPersonRepo(&db)
 
-	type mockBehavior func(ctx context.Context, id string)
+	type mockBehavior func(ctx context.Context, id int)
 
 	testTable := []struct {
 		nameTest     string
 		ctx          context.Context
-		id           string
+		id           int
 		mockBehavior mockBehavior
 	}{
 		{
 			nameTest: "ok",
 			ctx:      context.Background(),
-			id:       "345",
-			mockBehavior: func(ctx context.Context, id string) {
-				idint, _ := strconv.Atoi(id)
-				mockPool.EXPECT().Exec(ctx, "DELETE FROM persons_ WHERE id_ = $1", idint).Return(pgxmock.NewResult("DELETE", 1), nil)
+			id:       345,
+			mockBehavior: func(ctx context.Context, id int) {
+				mockPool.EXPECT().Exec(ctx, "DELETE FROM persons_ WHERE id_ = $1", id).Return(pgxmock.NewResult("DELETE", 1), nil)
 			},
-		},
-		{
-			nameTest:     "invalid_inputs",
-			ctx:          context.Background(),
-			id:           "5r4",
-			mockBehavior: func(ctx context.Context, id string) {},
 		},
 		{
 			nameTest: "no_person_to_delete",
 			ctx:      context.Background(),
-			id:       "345",
-			mockBehavior: func(ctx context.Context, id string) {
-				idint, _ := strconv.Atoi(id)
-				mockPool.EXPECT().Exec(ctx, "DELETE FROM persons_ WHERE id_ = $1", idint).Return(pgxmock.NewResult("DELETE", 0), nil)
+			id:       345,
+			mockBehavior: func(ctx context.Context, id int) {
+				mockPool.EXPECT().Exec(ctx, "DELETE FROM persons_ WHERE id_ = $1", id).Return(pgxmock.NewResult("DELETE", 0), nil)
 			},
 		},
 		{
 			nameTest: "exec_error",
 			ctx:      context.Background(),
-			id:       "345",
-			mockBehavior: func(ctx context.Context, id string) {
-				idint, _ := strconv.Atoi(id)
-				mockPool.EXPECT().Exec(ctx, "DELETE FROM persons_ WHERE id_ = $1", idint).Return(nil, errors.New("exec_error"))
+			id:       345,
+			mockBehavior: func(ctx context.Context, id int) {
+				mockPool.EXPECT().Exec(ctx, "DELETE FROM persons_ WHERE id_ = $1", id).Return(nil, errors.New("exec_error"))
 			},
 		},
 	}

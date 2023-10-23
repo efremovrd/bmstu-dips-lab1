@@ -6,7 +6,6 @@ import (
 	"bmstu-dips-lab1/pkg/errs"
 	"bmstu-dips-lab1/pkg/postgres"
 	"context"
-	"strconv"
 
 	"github.com/Masterminds/squirrel"
 	"github.com/jackc/pgx"
@@ -49,22 +48,17 @@ func (p *PersonRepo) Create(ctx context.Context, modelBL *models.Person) (*model
 	return PersonDBToBL(modelDB)
 }
 
-func (p *PersonRepo) GetById(ctx context.Context, id string) (*models.Person, error) {
-	intid, err := strconv.Atoi(id)
-	if err != nil {
-		return nil, errs.ErrInvalidContent
-	}
-
+func (p *PersonRepo) GetById(ctx context.Context, id int) (*models.Person, error) {
 	sql, args, err := p.Builder.
 		Select("name_, address_, work_, age_").
 		From("persons_").
-		Where(squirrel.Eq{"id_": intid}).
+		Where(squirrel.Eq{"id_": id}).
 		ToSql()
 	if err != nil {
 		return nil, err
 	}
 
-	modelDB := PersonDB{id: intid}
+	modelDB := PersonDB{id: id}
 	err = p.Pool.QueryRow(ctx, sql, args...).Scan(&modelDB.name, &modelDB.address, &modelDB.work, &modelDB.age)
 	if err != nil {
 		if err.Error() == pgx.ErrNoRows.Error() {
@@ -161,15 +155,10 @@ func (p *PersonRepo) Update(ctx context.Context, modelBL *models.Person, toUpdat
 	return modelBL, nil
 }
 
-func (p *PersonRepo) Delete(ctx context.Context, id string) error {
-	intid, err := strconv.Atoi(id)
-	if err != nil {
-		return errs.ErrInvalidContent
-	}
-
+func (p *PersonRepo) Delete(ctx context.Context, id int) error {
 	sql, args, err := p.Builder.
 		Delete("persons_").
-		Where(squirrel.Eq{"id_": intid}).
+		Where(squirrel.Eq{"id_": id}).
 		ToSql()
 	if err != nil {
 		return err
@@ -186,7 +175,7 @@ func (p *PersonRepo) Delete(ctx context.Context, id string) error {
 
 func PersonDBToBL(modelDB *PersonDB) (*models.Person, error) {
 	return &models.Person{
-		Id:      strconv.Itoa(modelDB.id),
+		Id:      modelDB.id,
 		Name:    modelDB.name,
 		Address: modelDB.address,
 		Work:    modelDB.work,
@@ -195,20 +184,8 @@ func PersonDBToBL(modelDB *PersonDB) (*models.Person, error) {
 }
 
 func PersonBLToDB(modelBL *models.Person) (*PersonDB, error) {
-	var (
-		err error
-		id  int
-	)
-
-	if modelBL.Id != "" {
-		id, err = strconv.Atoi(modelBL.Id)
-		if err != nil {
-			return nil, err
-		}
-	}
-
 	return &PersonDB{
-		id:      id,
+		id:      modelBL.Id,
 		name:    modelBL.Name,
 		address: modelBL.Address,
 		work:    modelBL.Work,

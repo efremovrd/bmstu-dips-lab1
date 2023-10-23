@@ -7,8 +7,8 @@ import (
 
 type Repo interface {
 	Create(ctx context.Context, modelBL *models.Person) (*models.Person, error)
-	GetById(ctx context.Context, id string) (*models.Person, error)
+	GetById(ctx context.Context, id int) (*models.Person, error)
 	GetAll(ctx context.Context) ([]*models.Person, error)
 	Update(ctx context.Context, modelBL *models.Person, toUpdate *models.Person) (*models.Person, error)
-	Delete(ctx context.Context, id string) error
+	Delete(ctx context.Context, id int) error
 }

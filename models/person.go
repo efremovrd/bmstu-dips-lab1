@@ -1,6 +1,6 @@
 package models
 
 type Person struct {
-	Id, Name, Address, Work string
-	Age                     int
+	Name, Address, Work string
+	Id, Age             int
 }

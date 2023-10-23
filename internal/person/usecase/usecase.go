@@ -24,7 +24,7 @@ func (p *PersonUseCase) GetAll(ctx context.Context) ([]*models.Person, error) {
 	return p.personRepo.GetAll(ctx)
 }
 
-func (p *PersonUseCase) GetById(ctx context.Context, id string) (*models.Person, error) {
+func (p *PersonUseCase) GetById(ctx context.Context, id int) (*models.Person, error) {
 	return p.personRepo.GetById(ctx, id)
 }
 
@@ -32,6 +32,6 @@ func (p *PersonUseCase) Update(ctx context.Context, model *models.Person, toUpda
 	return p.personRepo.Update(ctx, model, toUpdate)
 }
 
-func (p *PersonUseCase) Delete(ctx context.Context, id string) error {
+func (p *PersonUseCase) Delete(ctx context.Context, id int) error {
 	return p.personRepo.Delete(ctx, id)
 }
